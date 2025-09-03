@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { supabase } from './supabaseClient';
 
+
 function App() {
   // Estados principais
   const [transportadores, setTransportadores] = useState([]);
