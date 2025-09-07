@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import './App.css';
 import EnvironmentIndicator from './components/EnvironmentIndicator';
-import TransportadoresPage from './pages/TransportadoresPage';
-import ClientesPage from './pages/ClientesPage';
+
+import ClientesPage from './features/clientes/ClientesPage';
+import TransportadoresPage from './pages/TransportadoresPage'; // por agora fica aqui
+
 
 function App() {
   // Estado para controlar que página mostrar
