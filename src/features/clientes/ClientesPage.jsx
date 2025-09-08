@@ -3,6 +3,7 @@ import ListaClientes from "./components/ListaClientes.jsx";
 import FormularioCliente from "./components/FormularioCliente";
 import Notificacao from "./components/Notificacao";
 import { useClientes } from "./hooks/useClientes";
+import FichaDetalhadaCliente from "./components/FichaDetalhadaCliente";
 
 function ClientesPage() {
   // hook customizado
@@ -233,178 +234,17 @@ const handleEliminar = async (cliente) => {
         />
       )}
 
-      {/* Modal de Ficha Detalhada - 90% do ecrã */}
+  {/* Modal de Ficha Detalhada Completa */}
 {fichaDetalhada && (
-  <div style={{
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 2000,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
-  }}>
-    <div style={{
-      backgroundColor: 'white',
-      width: '90%',
-      height: '90%',
-      borderRadius: '12px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
-      {/* Cabeçalho da Ficha */}
-      <div style={{
-        padding: '24px',
-        borderBottom: '1px solid #dee2e6',
-        backgroundColor: '#f8f9fa',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div>
-          <h2 style={{ margin: '0 0 4px 0', color: '#212529' }}>
-            {fichaDetalhada.nome}
-          </h2>
-          <span style={{
-            color: '#6c757d',
-            fontSize: '14px'
-          }}>
-            NIF: {fichaDetalhada.nif}
-          </span>
-        </div>
-        
-        <button
-          onClick={() => setFichaDetalhada(null)}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            color: '#6c757d',
-            padding: '8px'
-          }}
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Conteúdo da Ficha */}
-      <div style={{
-        flex: 1,
-        padding: '24px',
-        overflow: 'auto'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '24px'
-        }}>
-          {/* Informações Básicas */}
-          <div style={{
-            padding: '20px',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px'
-          }}>
-            <h3 style={{ marginTop: 0, color: '#495057' }}>Informações Básicas</h3>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div><strong>Nome:</strong> {fichaDetalhada.nome}</div>
-              <div><strong>NIF:</strong> {fichaDetalhada.nif}</div>
-              <div><strong>Email:</strong> {fichaDetalhada.email || 'Não informado'}</div>
-              <div><strong>Telefone:</strong> {fichaDetalhada.telefone || 'Não informado'}</div>
-              <div><strong>Estado:</strong> 
-                <span style={{
-                  marginLeft: '8px',
-                  padding: '2px 8px',
-                  backgroundColor: fichaDetalhada.ativo === false ? '#f8d7da' : '#d4edda',
-                  color: fichaDetalhada.ativo === false ? '#721c24' : '#155724',
-                  borderRadius: '12px',
-                  fontSize: '12px'
-                }}>
-                  {fichaDetalhada.ativo === false ? 'Inativo' : 'Ativo'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Endereço */}
-          <div style={{
-            padding: '20px',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px'
-          }}>
-            <h3 style={{ marginTop: 0, color: '#495057' }}>Endereço</h3>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div><strong>Morada:</strong> {fichaDetalhada.morada || 'Não informado'}</div>
-              <div><strong>Código Postal:</strong> {fichaDetalhada.codigopostal || 'Não informado'}</div>
-              <div><strong>Localidade:</strong> {fichaDetalhada.localidade || 'Não informado'}</div>
-              <div><strong>Distrito:</strong> {fichaDetalhada.distrito || 'Não informado'}</div>
-              <div><strong>País:</strong> {fichaDetalhada.pais || 'Portugal'}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Observações */}
-        {fichaDetalhada.observacoes && (
-          <div style={{
-            marginTop: '24px',
-            padding: '20px',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px'
-          }}>
-            <h3 style={{ marginTop: 0, color: '#495057' }}>Observações</h3>
-            <p style={{ margin: 0, lineHeight: '1.6' }}>{fichaDetalhada.observacoes}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Rodapé com Ações */}
-      <div style={{
-        padding: '20px 24px',
-        borderTop: '1px solid #dee2e6',
-        backgroundColor: '#f8f9fa',
-        display: 'flex',
-        gap: '12px',
-        justifyContent: 'flex-end'
-      }}>
-        <button
-          onClick={() => {
-            setClienteSelecionado(fichaDetalhada);
-            setMostrarFormulario(true);
-            setFichaDetalhada(null);
-          }}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          Editar Cliente
-        </button>
-        
-        <button
-          onClick={() => setFichaDetalhada(null)}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          Fechar
-        </button>
-      </div>
-    </div>
-  </div>
+  <FichaDetalhadaCliente
+    cliente={fichaDetalhada}
+    onFechar={() => setFichaDetalhada(null)}
+    onEditar={(cliente) => {
+      setClienteSelecionado(cliente);
+      setMostrarFormulario(true);
+      setFichaDetalhada(null);
+    }}
+  />
 )}
 
    <ListaClientes

@@ -1,65 +1,82 @@
 // src/features/clientes/components/FormularioCliente.jsx
 import React, { useState, useEffect } from "react";
+import SeletorCAE from "./SeletorCAE";
 
 const FormularioCliente = ({ cliente, onSalvar, onCancelar }) => {
-  // Estado do formulário expandido com todos os campos necessários
+  // Estado do formulário completamente alinhado com a estrutura final da tabela clientes
   const [formData, setFormData] = useState({
-    pais_id: "PT",
-    nif: "",
+    // Campos obrigatórios da tabela
     nome: "",
-    cae: "",
+    nif: "",
+    tipo_cliente: "empresa", // Valor padrão: 'particular' ou 'empresa'
+    
+    // Campos de contacto
+    telefone: "",
+    telemovel: "",
+    email: "",
+    contacto_geral: "", // Campo de texto livre para informações de contacto gerais
+    
+    // Campos de endereço
     morada: "",
     codigo_postal: "",
     localidade: "",
-    pais: "",
-    email: "",
-    telefone: "",
-    telemovel: "",
-    contacto_geral: "",
-    estado: "prospeto",
-    tipos_servico: [], // Array para seleções múltiplas
-    ambito: [], // Array para países de atuação
-    modalidades: [], // Array para modalidades de transporte
+    pais: "Portugal", // Valor padrão da tabela
+    distrito: "",
+    
+    // Identificação e atividade (campos específicos do negócio)
+    pais_id: "PT", // País do NIF para validação específica
+    cae: "", // Código de Atividade Económica
+    
+    // Estado simplificado - apenas ativo/inativo
+    ativo: true, // Boolean - sistema simplificado conforme migração
+    
+    // Observações
     observacoes: "",
-    ativo: true
+    
+    // Campos JSONB para seleções múltiplas (funcionalidades avançadas)
+    tipos_servico: [], // Array para tipos de serviço oferecidos
+    ambito: [], // Array para âmbito geográfico
+    modalidades: [] // Array para modalidades de transporte
   });
 
   const [erros, setErros] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // useEffect corrigido para incluir todos os novos campos
+  // Carregar dados do cliente para edição - alinhado com estrutura real da tabela
   useEffect(() => {
     if (cliente) {
       setFormData({
-        pais_id: cliente.pais_id || "PT",
         nome: cliente.nome || "",
         nif: cliente.nif || "",
-        cae: cliente.cae || "",
+        tipo_cliente: cliente.tipo_cliente || "empresa",
+        telefone: cliente.telefone || "",
+        telemovel: cliente.telemovel || "",
+        email: cliente.email || "",
+        contacto_geral: cliente.contacto_geral || "",
         morada: cliente.morada || "",
         codigo_postal: cliente.codigo_postal || "",
         localidade: cliente.localidade || "",
-        pais: cliente.pais || "",
-        email: cliente.email || "",
-        telefone: cliente.telefone || "",
-        telemovel: cliente.telemovel || "",
-        contacto_geral: cliente.contacto_geral || "",
-        estado: cliente.estado || "prospeto",
-        tipos_servico: cliente.tipos_servico || [],
-        ambito: cliente.ambito || [],
-        modalidades: cliente.modalidades || [],
+        pais: cliente.pais || "Portugal",
+        distrito: cliente.distrito || "",
+        pais_id: cliente.pais_id || "PT",
+        cae: cliente.cae || "",
+        
+        // Sistema simplificado - apenas boolean ativo
+        ativo: cliente.ativo !== false,
+        
         observacoes: cliente.observacoes || "",
-        ativo: cliente.ativo !== false
+        
+        // Campos JSONB - garantir que são arrays válidos
+        tipos_servico: Array.isArray(cliente.tipos_servico) ? cliente.tipos_servico : [],
+        ambito: Array.isArray(cliente.ambito) ? cliente.ambito : [],
+        modalidades: Array.isArray(cliente.modalidades) ? cliente.modalidades : []
       });
-   }
+    }
   }, [cliente]);
 
-  // Função de validação expandida com todos os novos campos
+  // Validações melhoradas alinhadas com a estrutura da base de dados
   const validarCampo = (nome, valor) => {
     switch (nome) {
-      case 'pais_id':
-        if (!valor) return 'País do NIF é obrigatório';
-        return null;
-
       case 'nome':
         if (!valor.trim()) return 'Nome é obrigatório';
         if (valor.trim().length < 2) return 'Nome deve ter pelo menos 2 caracteres';
@@ -75,79 +92,67 @@ const FormularioCliente = ({ cliente, onSalvar, onCancelar }) => {
         }
         return null;
       
+      case 'tipo_cliente':
+        const tiposValidos = ['particular', 'empresa'];
+        if (!tiposValidos.includes(valor)) return 'Tipo de cliente inválido';
+        return null;
+      
       case 'email':
-        if (!valor) return null;
+        if (!valor) return null; // Email é opcional
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(valor)) return 'Email inválido';
         return null;
       
       case 'telefone':
-        if (!valor) return null;
-        const telefoneRegex = /^[\d\s\-\+\(\)]+$/;
-        if (!telefoneRegex.test(valor)) return 'Telefone inválido';
-        return null;
-      
       case 'telemovel':
-        if (!valor) return null;
-        const telemovelRegex = /^[\d\s\-\+\(\)]+$/;
-        if (!telemovelRegex.test(valor)) return 'Telemóvel inválido';
+        if (!valor) return null; // Campos opcionais
+        const telefoneRegex = /^[\d\s\-\+\(\)]+$/;
+        if (!telefoneRegex.test(valor)) return 'Formato de telefone inválido';
         return null;
       
-      case 'codigopostal':
-        if (!valor) return null;
+      case 'codigo_postal':
+        if (!valor) return null; // Opcional
         if (formData.pais === 'Portugal') {
           if (!/^\d{4}-\d{3}$/.test(valor)) return 'Formato português deve ser XXXX-XXX';
         }
         return null;
       
       case 'cae':
-        if (!valor) return null; // CAE é opcional mas recomendado
+        if (!valor) return null; // CAE é opcional
         const caeLimpo = valor.replace(/\D/g, '');
         if (caeLimpo.length !== 5) return 'CAE deve ter 5 dígitos';
         return null;
 
-      case 'estado':
-        const estadosValidos = ['prospeto', 'ativo', 'inativo'];
-        if (!estadosValidos.includes(valor)) return 'Estado inválido';
-        return null;
-
-      case 'tipos_servico':
-        if (!valor || valor.length === 0) return 'Selecione pelo menos um tipo de serviço';
-        return null;
-
-      case 'ambito':
-        if (!valor || valor.length === 0) return 'Selecione pelo menos um país de atuação';
-        return null;
-
-      case 'modalidades':
-        if (!valor || valor.length === 0) return 'Selecione pelo menos uma modalidade';
-        return null;
-         
       default:
         return null;
     }
   };
 
-  // Função handleChange melhorada com formatação inteligente
+  // Função de mudança de campos com formatação automática inteligente
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
     let novoValor = type === 'checkbox' ? checked : value;
     
-    // Formatação automática baseada no campo e contexto
+    // Formatação automática específica por campo para melhorar experiência do utilizador
     if (name === 'nome') {
+      // Converter nome para maiúsculas para consistência
       novoValor = value.toUpperCase();
     } else if (name === 'email') {
+      // Converter email para minúsculas para evitar problemas de case
       novoValor = value.toLowerCase();
     } else if (name === 'nif') {
+      // Formatação de NIF baseada no país selecionado
       if (formData.pais_id === 'PT') {
         novoValor = value.replace(/\D/g, '').slice(0, 9);
       } else {
-        novoValor = value.slice(0, 20); // Permite mais flexibilidade para NIFs estrangeiros
+        novoValor = value.slice(0, 20); // Flexibilidade para NIFs estrangeiros
       }
     } else if (name === 'cae') {
+      // CAE deve ter apenas 5 dígitos
       novoValor = value.replace(/\D/g, '').slice(0, 5);
-    } else if (name === 'codigopostal') {
+    } else if (name === 'codigo_postal') {
+      // Formatação automática de código postal português
       if (formData.pais === 'Portugal') {
         const digits = value.replace(/\D/g, '');
         if (digits.length <= 4) {
@@ -156,13 +161,14 @@ const FormularioCliente = ({ cliente, onSalvar, onCancelar }) => {
           novoValor = `${digits.slice(0, 4)}-${digits.slice(4, 7)}`;
         }
       } else {
-        novoValor = value; // Permite formatos livres para outros países
+        novoValor = value; // Permitir formatos livres para outros países
       }
     }
     
+    // Atualizar estado do formulário
     setFormData(prev => ({ ...prev, [name]: novoValor }));
     
-    // Validação em tempo real
+    // Validação em tempo real para feedback imediato
     const erro = validarCampo(name, novoValor);
     setErros(prev => {
       const novosErros = { ...prev };
@@ -175,9 +181,27 @@ const FormularioCliente = ({ cliente, onSalvar, onCancelar }) => {
     });
   };
 
+  // Gestão de seleções múltiplas para campos JSONB (funcionalidade futura)
+  const handleArrayChange = (campo, valor, checked) => {
+    setFormData(prev => {
+      const arrayAtual = prev[campo] || [];
+      let novoArray;
+      
+      if (checked) {
+        novoArray = [...arrayAtual, valor];
+      } else {
+        novoArray = arrayAtual.filter(item => item !== valor);
+      }
+      
+      return { ...prev, [campo]: novoArray };
+    });
+  };
+
+  // Submissão do formulário com validação completa
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validação completa antes de submeter
     const novosErros = {};
     Object.keys(formData).forEach(campo => {
       const erro = validarCampo(campo, formData[campo]);
@@ -192,7 +216,20 @@ const FormularioCliente = ({ cliente, onSalvar, onCancelar }) => {
     setLoading(true);
     
     try {
-      await onSalvar(formData);
+      // Preparar dados para envio, garantindo compatibilidade com estrutura da tabela
+      const dadosParaEnvio = {
+        ...formData,
+        // Garantir que campos obrigatórios estão presentes e formatados
+        nome: formData.nome.trim().toUpperCase(),
+        nif: formData.nif.replace(/\D/g, ''),
+        email: formData.email ? formData.email.toLowerCase() : null,
+        // Campos JSONB mantidos como arrays
+        tipos_servico: formData.tipos_servico,
+        ambito: formData.ambito,
+        modalidades: formData.modalidades
+      };
+      
+      await onSalvar(dadosParaEnvio);
     } catch (error) {
       setErros({ submit: 'Erro ao salvar cliente. Tente novamente.' });
     } finally {
@@ -200,35 +237,7 @@ const FormularioCliente = ({ cliente, onSalvar, onCancelar }) => {
     }
   };
 
-  // Função para gerir seleções múltiplas em campos JSONB
-const handleArrayChange = (campo, valor, checked) => {
-  setFormData(prev => {
-    const arrayAtual = prev[campo] || [];
-    let novoArray;
-    
-    if (checked) {
-      novoArray = [...arrayAtual, valor];
-    } else {
-      novoArray = arrayAtual.filter(item => item !== valor);
-    }
-    
-    // Validar o novo array
-    const erro = validarCampo(campo, novoArray);
-    setErros(prevErros => {
-      const novosErros = { ...prevErros };
-      if (erro) {
-        novosErros[campo] = erro;
-      } else {
-        delete novosErros[campo];
-      }
-      return novosErros;
-    });
-    
-    return { ...prev, [campo]: novoArray };
-  });
-};
-
-  // Função auxiliar para renderizar campos padronizados
+  // Função auxiliar para renderizar campos padronizados com estilo consistente
   const renderCampo = (nome, label, tipo = 'text', obrigatorio = false, placeholder = '') => (
     <div style={{ marginBottom: '16px' }}>
       <label style={{
@@ -301,7 +310,7 @@ const handleArrayChange = (campo, valor, checked) => {
         flexDirection: 'column',
         overflow: 'hidden'
       }}>
-        {/* Cabeçalho */}
+        {/* Cabeçalho do modal com design profissional */}
         <div style={{
           padding: '24px',
           borderBottom: '1px solid #dee2e6',
@@ -317,13 +326,13 @@ const handleArrayChange = (campo, valor, checked) => {
           </h2>
         </div>
 
-        {/* Conteúdo do formulário */}
+        {/* Conteúdo principal do formulário com scroll */}
         <form onSubmit={handleSubmit} style={{ 
           flex: 1, 
           overflow: 'auto',
           padding: '24px'
         }}>
-          {/* Secção 1: Identificação */}
+          {/* Seção 1: Identificação Principal */}
           <div style={{
             padding: '20px',
             border: '1px solid #dee2e6',
@@ -340,7 +349,47 @@ const handleArrayChange = (campo, valor, checked) => {
               Identificação do Cliente
             </h3>
             
-            {/* Linha 1: País + NIF */}
+            {/* Tipo de Cliente - escolha fundamental que afeta outras validações */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '4px',
+                fontWeight: '500',
+                color: '#495057',
+                fontSize: '14px'
+              }}>
+                Tipo de Cliente *
+              </label>
+              <select
+                name="tipo_cliente"
+                value={formData.tipo_cliente}
+                onChange={handleChange}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: `1px solid ${erros.tipo_cliente ? '#dc3545' : '#ced4da'}`,
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="empresa">Empresa</option>
+                <option value="particular">Particular</option>
+              </select>
+              {erros.tipo_cliente && (
+                <span style={{
+                  color: '#dc3545',
+                  fontSize: '12px',
+                  marginTop: '4px',
+                  display: 'block'
+                }}>
+                  {erros.tipo_cliente}
+                </span>
+              )}
+            </div>
+            
+            {/* País e NIF - validação inteligente baseada no país */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '120px 1fr',
@@ -384,37 +433,19 @@ const handleArrayChange = (campo, valor, checked) => {
                   <option value="AT">AT</option>
                   <option value="OTHER">Outro</option>
                 </select>
-                {erros.pais_id && (
-                  <span style={{
-                    color: '#dc3545',
-                    fontSize: '11px',
-                    marginTop: '2px',
-                    display: 'block'
-                  }}>
-                    {erros.pais_id}
-                  </span>
-                )}
               </div>
               
-              <div style={{ marginBottom: '16px' }}>
+              <div>
                 {renderCampo('nif', 'NIF/Número de Identificação Fiscal', 'text', true, 
                   formData.pais_id === 'PT' ? 'Ex: 123456789' : 'Número de identificação do país selecionado')}
               </div>
             </div>
             
-            {/* Linha 2: Nome */}
+            {/* Nome - campo obrigatório com formatação automática */}
             {renderCampo('nome', 'Nome da Empresa/Cliente', 'text', true, 'Ex: EMPRESA EXEMPLO LDA')}
             
-            {/* Linha 3: CAE + Tipo */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '150px 1fr',
-              gap: '12px'
-            }}>
-              <div>
-                {renderCampo('cae', 'CAE', 'text', false, '12345')}
-              </div>
-              
+            {/* CAE - apenas para empresas, usando o SeletorCAE quando disponível */}
+            {formData.tipo_cliente === 'empresa' && (
               <div style={{ marginBottom: '16px' }}>
                 <label style={{
                   display: 'block',
@@ -423,32 +454,58 @@ const handleArrayChange = (campo, valor, checked) => {
                   color: '#495057',
                   fontSize: '14px'
                 }}>
-                  Tipo de Cliente *
+                  CAE - Código de Atividade Económica
                 </label>
-                <select
-                  name="tipo"
-                  value={formData.tipo}
+                {/* 
+                  Nota: O SeletorCAE pode ser usado aqui quando a tabela codigos_cae estiver implementada.
+                  Por agora, usamos um campo simples que aceita códigos CAE de 5 dígitos.
+                */}
+                <input
+                  type="text"
+                  name="cae"
+                  value={formData.cae || ''}
                   onChange={handleChange}
+                  placeholder="12345"
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    border: '1px solid #ced4da',
+                    border: `1px solid ${erros.cae ? '#dc3545' : '#ced4da'}`,
                     borderRadius: '4px',
                     fontSize: '14px',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box'
+                    transition: 'border-color 0.2s ease',
+                    boxSizing: 'border-box',
+                    backgroundColor: erros.cae ? '#fff5f5' : 'white'
                   }}
-                >
-                  <option value="Empresa">Empresa</option>
-                  <option value="Particular">Particular</option>
-                  <option value="Transportador">Transportador</option>
-                  <option value="Transitário">Transitário</option>
-                </select>
+                  onFocus={(e) => {
+                    if (!erros.cae) e.target.style.borderColor = '#007bff';
+                  }}
+                  onBlur={(e) => {
+                    if (!erros.cae) e.target.style.borderColor = '#ced4da';
+                  }}
+                />
+                {erros.cae && (
+                  <span style={{
+                    color: '#dc3545',
+                    fontSize: '12px',
+                    marginTop: '4px',
+                    display: 'block'
+                  }}>
+                    {erros.cae}
+                  </span>
+                )}
+                <small style={{
+                  color: '#6c757d',
+                  fontSize: '12px',
+                  display: 'block',
+                  marginTop: '4px'
+                }}>
+                  Código oficial de 5 dígitos da atividade principal da empresa
+                </small>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Secção 2: Contactos */}
+          {/* Seção 2: Contactos */}
           <div style={{
             padding: '20px',
             border: '1px solid #dee2e6',
@@ -475,9 +532,39 @@ const handleArrayChange = (campo, valor, checked) => {
               {renderCampo('telefone', 'Telefone Fixo', 'tel', false, '+351 22 123 4567')}
               {renderCampo('telemovel', 'Telemóvel', 'tel', false, '+351 912 345 678')}
             </div>
+            
+            {/* Campo contacto_geral - texto livre para informações específicas */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '4px',
+                fontWeight: '500',
+                color: '#495057',
+                fontSize: '14px'
+              }}>
+                Contacto Geral
+              </label>
+              <textarea
+                name="contacto_geral"
+                value={formData.contacto_geral}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Informações gerais de contacto, horários, responsáveis..."
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
           </div>
 
-          {/* Secção 3: Morada */}
+          {/* Seção 3: Morada */}
           <div style={{
             padding: '20px',
             border: '1px solid #dee2e6',
@@ -501,7 +588,7 @@ const handleArrayChange = (campo, valor, checked) => {
               marginBottom: '16px'
             }}>
               {renderCampo('morada', 'Morada', 'text', false, 'Rua da Empresa, nº 123')}
-              {renderCampo('codigopostal', 'Código Postal', 'text', false, '4470-123')}
+              {renderCampo('codigo_postal', 'Código Postal', 'text', false, '4470-123')}
             </div>
             
             <div style={{
@@ -592,7 +679,212 @@ const handleArrayChange = (campo, valor, checked) => {
             </div>
           </div>
 
-          {/* Secção 4: Observações */}
+          {/* Seção 4: Informações Logísticas - Necessidades e Características Operacionais */}
+          <div style={{
+            padding: '20px',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{
+              margin: '0 0 20px 0',
+              color: '#495057',
+              fontSize: '18px',
+              borderBottom: '2px solid #dee2e6',
+              paddingBottom: '8px'
+            }}>
+              Perfil Logístico do Cliente
+            </h3>
+            
+            {/* Tipos de Serviços Necessários */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#495057',
+                fontSize: '14px'
+              }}>
+                Tipos de Serviços Necessários
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '8px',
+                padding: '12px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '6px',
+                border: '1px solid #e9ecef'
+              }}>
+                {['FTL (Carga Completa)', 'LTL (Carga Parcial)', 'Groupage', 'Expresso/Urgente', 'Distribuição Local', 'Transporte Dedicado'].map(servico => (
+                  <label key={servico} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.tipos_servico.includes(servico)}
+                      onChange={(e) => handleArrayChange('tipos_servico', servico, e.target.checked)}
+                      style={{ transform: 'scale(1.1)' }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#495057' }}>{servico}</span>
+                  </label>
+                ))}
+              </div>
+              <small style={{
+                color: '#6c757d',
+                fontSize: '12px',
+                display: 'block',
+                marginTop: '6px'
+              }}>
+                Selecione os tipos de serviços de transporte que este cliente necessita regularmente
+              </small>
+            </div>
+
+            {/* Âmbito Geográfico de Atuação */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#495057',
+                fontSize: '14px'
+              }}>
+                Mercados/Âmbito Geográfico
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '8px',
+                padding: '12px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '6px',
+                border: '1px solid #e9ecef'
+              }}>
+                {['Nacional (Portugal)', 'Península Ibérica', 'Europa Ocidental', 'Europa Central', 'Europa de Leste', 'Reino Unido', 'Países Nórdicos', 'Intercontinental'].map(ambito => (
+                  <label key={ambito} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.ambito.includes(ambito)}
+                      onChange={(e) => handleArrayChange('ambito', ambito, e.target.checked)}
+                      style={{ transform: 'scale(1.1)' }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#495057' }}>{ambito}</span>
+                  </label>
+                ))}
+              </div>
+              <small style={{
+                color: '#6c757d',
+                fontSize: '12px',
+                display: 'block',
+                marginTop: '6px'
+              }}>
+                Indique os mercados geográficos onde o cliente tem necessidades de transporte
+              </small>
+            </div>
+
+            {/* Modalidades de Transporte */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#495057',
+                fontSize: '14px'
+              }}>
+                Modalidades de Transporte
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: '8px',
+                padding: '12px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '6px',
+                border: '1px solid #e9ecef'
+              }}>
+                {['Rodoviário', 'Marítimo', 'Aéreo', 'Ferroviário', 'Multimodal'].map(modalidade => (
+                  <label key={modalidade} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.modalidades.includes(modalidade)}
+                      onChange={(e) => handleArrayChange('modalidades', modalidade, e.target.checked)}
+                      style={{ transform: 'scale(1.1)' }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#495057' }}>{modalidade}</span>
+                  </label>
+                ))}
+              </div>
+              <small style={{
+                color: '#6c757d',
+                fontSize: '12px',
+                display: 'block',
+                marginTop: '6px'
+              }}>
+                Modalidades de transporte que o cliente utiliza ou está interessado em utilizar
+              </small>
+            </div>
+
+            {/* Resumo Visual das Seleções */}
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#e7f3ff',
+              borderRadius: '6px',
+              border: '1px solid #b8daff'
+            }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#004085' }}>
+                Resumo do Perfil Logístico:
+              </h4>
+              <div style={{ fontSize: '13px', color: '#004085', lineHeight: '1.4' }}>
+                {formData.tipos_servico.length > 0 && (
+                  <div><strong>Serviços:</strong> {formData.tipos_servico.join(', ')}</div>
+                )}
+                {formData.ambito.length > 0 && (
+                  <div><strong>Mercados:</strong> {formData.ambito.join(', ')}</div>
+                )}
+                {formData.modalidades.length > 0 && (
+                  <div><strong>Modalidades:</strong> {formData.modalidades.join(', ')}</div>
+                )}
+                {formData.tipos_servico.length === 0 && formData.ambito.length === 0 && formData.modalidades.length === 0 && (
+                  <div style={{ fontStyle: 'italic', color: '#6c757d' }}>
+                    Nenhuma característica logística selecionada
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Seção 5: Informações Adicionais - simplificada com sistema ativo/inativo */}
           <div style={{
             padding: '20px',
             border: '1px solid #dee2e6',
@@ -637,28 +929,54 @@ const handleArrayChange = (campo, valor, checked) => {
               />
             </div>
             
+            {/* Sistema simplificado ativo/inativo */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '12px',
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '6px',
+              border: '1px solid #e9ecef'
             }}>
               <input
                 type="checkbox"
                 name="ativo"
                 checked={formData.ativo}
                 onChange={handleChange}
-                style={{ transform: 'scale(1.2)' }}
+                style={{ 
+                  transform: 'scale(1.3)',
+                  accentColor: '#28a745'
+                }}
               />
-              <label style={{
-                fontWeight: '500',
-                color: '#495057',
-                fontSize: '14px'
-              }}>
-                Cliente Ativo
-              </label>
+              <div style={{ flex: 1 }}>
+                <label style={{
+                  fontWeight: '500',
+                  color: '#495057',
+                  fontSize: '14px',
+                  display: 'block',
+                  cursor: 'pointer'
+                }}
+                onClick={() => handleChange({
+                  target: { name: 'ativo', type: 'checkbox', checked: !formData.ativo }
+                })}
+                >
+                  Cliente Ativo
+                </label>
+                <small style={{
+                  color: '#6c757d',
+                  fontSize: '12px'
+                }}>
+                  {formData.ativo 
+                    ? 'Cliente disponível para novas operações comerciais' 
+                    : 'Cliente inativo - não disponível para novas operações'
+                  }
+                </small>
+              </div>
             </div>
           </div>
 
+          {/* Mensagem de erro geral */}
           {erros.submit && (
             <div style={{
               marginTop: '20px',
@@ -673,7 +991,7 @@ const handleArrayChange = (campo, valor, checked) => {
           )}
         </form>
 
-        {/* Rodapé */}
+        {/* Rodapé com botões de ação */}
         <div style={{
           padding: '20px 24px',
           borderTop: '1px solid #dee2e6',
@@ -695,7 +1013,14 @@ const handleArrayChange = (campo, valor, checked) => {
               cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: '500',
-              opacity: loading ? 0.6 : 1
+              opacity: loading ? 0.6 : 1,
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.target.style.backgroundColor = '#5a6268';
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) e.target.style.backgroundColor = '#6c757d';
             }}
           >
             Cancelar
@@ -714,7 +1039,14 @@ const handleArrayChange = (campo, valor, checked) => {
               cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: '500',
-              transition: 'background-color 0.2s ease'
+              transition: 'all 0.2s ease',
+              minWidth: '100px'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.target.style.backgroundColor = '#218838';
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) e.target.style.backgroundColor = '#28a745';
             }}
           >
             {loading ? 'Salvando...' : (cliente ? 'Atualizar' : 'Criar')}
@@ -726,4 +1058,3 @@ const handleArrayChange = (campo, valor, checked) => {
 };
 
 export default FormularioCliente;
-
